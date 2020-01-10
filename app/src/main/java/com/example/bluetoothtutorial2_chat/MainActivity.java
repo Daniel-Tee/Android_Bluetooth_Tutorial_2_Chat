@@ -25,6 +25,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.UUID;
@@ -37,7 +38,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     Button btn_toggle_discoverability;
     Button btn_discover;
     ListView list_new_devices;
-    Button btn_find_unpaired_devices;
+    Button btn_start_connection;
     Button btn_send;
 
     BluetoothConnectionService mBluetoothConnection;
@@ -163,6 +164,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 // Case 1: Already bonded
                 if (mDevice.getBondState() == BluetoothDevice.BOND_BONDED) {
                     Log.d(TAG, "onReceive: BOND_BONDED.");
+                    // Assign BT device
+                    mBTDevice = mDevice;
                 }
 
                 // Case 2: Creating a bond
@@ -187,7 +190,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         btn_on_off = findViewById(R.id.btn_on_off);
         btn_toggle_discoverability = findViewById(R.id.btn_toggle_discoverability);
         btn_discover = findViewById(R.id.btn_discover);
-        btn_find_unpaired_devices = findViewById(R.id.btnFindUnpairedDevices);
+        btn_start_connection = findViewById(R.id.btnFindUnpairedDevices);
         btn_send = findViewById(R.id.btn_send);
 
         // Edit text
@@ -231,10 +234,40 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 discoverDevice();
             }
         });
+
+        // NEW
+        btn_start_connection.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startConnection();
+            }
+        });
+
+        // NEW
+        btn_send.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                byte[] bytes = editText.getText().toString().getBytes(Charset.defaultCharset());
+                mBluetoothConnection.write(bytes);
+            }
+        });
+    }
+
+    // NEW
+    // Method to start connection
+    // --- IMPORTANT: APP WILL CRASH IF HAVEN'T PAIRED FIRST -- //
+    public void startConnection() {
+        startBTConnection(mBTDevice, MY_UUID_INSECURE);
     }
 
     // Start chat service
+    public void startBTConnection(BluetoothDevice device, UUID uuid) {
+        Log.d(TAG, "startBTConnection: Initialising RFCOMM connection.");
 
+        mBluetoothConnection.startClient(device, uuid);
+    }
+
+    /*
     // Turn off the broadcast receiver when destroyed
     @Override
     protected void onDestroy() {
@@ -245,6 +278,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         unregisterReceiver(mBroadcastReceiver3);
         unregisterReceiver(mBroadcastReceiver4);
     }
+    */
 
     // Enable/Disable bluetooth button method
     public void enableDisableBT() {
@@ -343,30 +377,13 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
        Log.d(TAG, "onItemClick: deviceName: " + deviceName);
        Log.d(TAG, "onItemClick: deviceAddress: " + deviceAddress);
 
-       // First check if already bonded
-       if (pairedDevices.size() > 0) {
-           for (BluetoothDevice device : pairedDevices) {
-               String prevDeviceAddress = device.getAddress();
+       // Create the bond
+       // Requires API 18+
+       Log.d(TAG, "onItemClick: Trying to pair with " + deviceName);
+       mBTDevices.get(i).createBond();
 
-               if (prevDeviceAddress == deviceAddress) {
-                   Log.d(TAG, "onItemClick: Paired device already found");
-                    Thread mConnection = new ConnectThread(device);
-                    mConnection.run();
-                    break;
-               }
-           }
-
-           // If this point reached, device not paired, so pair device
-           // Create the bond
-           // Requires API 18+
-           Log.d(TAG, "onItemClick: Trying to pair with " + deviceName);
-           mBTDevices.get(i).createBond();
-       } else {
-           // Create the bond
-           // Requires API 18+
-           Log.d(TAG, "onItemClick: Trying to pair with " + deviceName);
-           mBTDevices.get(i).createBond();
-       }
+       mBTDevice = mBTDevices.get(i);
+       mBluetoothConnection = new BluetoothConnectionService(MainActivity.this);
    }
 
     private class ConnectThread extends Thread {

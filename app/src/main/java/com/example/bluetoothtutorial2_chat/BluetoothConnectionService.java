@@ -21,20 +21,22 @@ public class BluetoothConnectionService {
             UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66");
 
     private final BluetoothAdapter mBluetoothAdapter;
-    Context mContext;
+    private Context mContext;
 
     private AcceptThread mInsecureAcceptThread;
     
     private ConnectThread mConnectThread;
     private BluetoothDevice mmDevice;
     private UUID deviceUUID;
-    ProgressDialog mProgressDialog;
+    private ProgressDialog mProgressDialog;
 
     private ConnectedThread mConnectedThread;
 
     public BluetoothConnectionService(Context context) {
         mContext = context;
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        Log.d(TAG, "BluetoothConnectionService: Calling start in constructor.");
+        start(); // start chat service
     }
 
     // ====================================================================
@@ -48,7 +50,7 @@ public class BluetoothConnectionService {
         // Local server socket
         private final BluetoothServerSocket mmServerSocket;
 
-        public AcceptThread() {
+        private AcceptThread() {
             BluetoothServerSocket tmp = null;
 
             // Create a new listening server socket that other devices connect to
@@ -101,7 +103,7 @@ public class BluetoothConnectionService {
     private class ConnectThread extends Thread {
         private BluetoothSocket mmSocket;
         
-        public ConnectThread(BluetoothDevice device, UUID uuid) {
+        private ConnectThread(BluetoothDevice device, UUID uuid) {
             Log.d(TAG, "ConnectThread: started.");
             mmDevice = device;
             deviceUUID = uuid;
@@ -144,7 +146,7 @@ public class BluetoothConnectionService {
             connected(mmSocket, mmDevice);
         }
 
-        public void cancel() {
+        private void cancel() {
             Log.d(TAG, "cancel: Cancelling ConnectThread.");
 
             try {
@@ -200,7 +202,11 @@ public class BluetoothConnectionService {
             OutputStream tmpOut = null;
 
             // Close progress dialog box when connection is established
-            mProgressDialog.dismiss();
+            try {
+                mProgressDialog.dismiss();
+            } catch (NullPointerException e) {
+                Log.e(TAG, "ConnectedThread: no dialog to dismiss", e);
+            }
 
             try {
                 tmpIn = mmSocket.getInputStream();

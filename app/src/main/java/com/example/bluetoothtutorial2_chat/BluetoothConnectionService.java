@@ -9,6 +9,9 @@ import android.content.Context;
 import android.util.Log;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.util.UUID;
 
 public class BluetoothConnectionService {
@@ -26,6 +29,8 @@ public class BluetoothConnectionService {
     private BluetoothDevice mmDevice;
     private UUID deviceUUID;
     ProgressDialog mProgressDialog;
+
+    private ConnectedThread mConnectedThread;
 
     public BluetoothConnectionService(Context context) {
         mContext = context;
@@ -180,6 +185,97 @@ public class BluetoothConnectionService {
 
         mConnectThread = new ConnectThread(device, uuid);
         mConnectThread.start();
+    }
+
+    // ConnectedThread manages the connection once connected
+    private class ConnectedThread extends Thread {
+        private final BluetoothSocket mmSocket;
+        private final InputStream mmInStream;
+        private final OutputStream mmOutStream;
+
+        public ConnectedThread(BluetoothSocket socket) {
+            Log.d(TAG, "ConnectedThread: Begin.");
+
+            mmSocket = socket;
+            InputStream tmpIn = null;
+            OutputStream tmpOut = null;
+
+            // Close progress dialog box when connection is established
+            mProgressDialog.dismiss();
+
+            try {
+                tmpIn = mmSocket.getInputStream();
+                tmpOut = mmSocket.getOutputStream();
+            } catch (IOException e) {
+                Log.e(TAG, "ConnectedThread: Error getting in/out streams", e);
+            }
+
+            mmInStream = tmpIn;
+            mmOutStream = tmpOut;
+        }
+
+        // Run continually reads from input stream.
+        // buffer stores incoming data from stream, and bytes is used to read from the buffer.
+        // If connection fails, IOException is caught and loop breaks, ending connection
+        public void run() {
+            byte[] buffer = new byte[1024];
+            int bytes;
+
+            while(true) {
+                try {
+                    bytes = mmInStream.read(buffer);
+
+                    // This code is specific to application, used to change inocming data to the
+                    // string of text for chat, but can be changed to anything to fit purpose
+                    String incomingMessage = new String(buffer, 0, bytes);
+                    Log.d(TAG, "run: IncomingMessage :" + incomingMessage);
+                } catch (IOException e) {
+                    Log.e(TAG, "run: error reading inStream, ending comms: ", e);
+                    break;
+                }
+            }
+        }
+
+        // Called in MainActivity to send data to remote device
+        public void write (byte[] bytes) {
+            // Convert string for logging
+            String text = new String(bytes, Charset.defaultCharset());
+            Log.d(TAG, "write: Writing to outputStream: " + text);
+
+            try {
+                mmOutStream.write(bytes);
+            } catch (IOException e) {
+                Log.e(TAG, "write: Error writing to outputstream: ", e);
+            }
+        }
+
+        // Called in MainActivity to cancel connection
+        public void cancel() {
+            try {
+                mmSocket.close();
+            } catch (IOException e) {
+                Log.e(TAG, "cancel: Error closing connection: ", e);
+            }
+        }
+    }
+
+    // Called in MainActivity to start managing transmission
+    private void connected(BluetoothSocket mmSocket, BluetoothDevice mmDevice) {
+        Log.d(TAG, "connected: Begin.");
+
+        // Start thread to manage connection and perform transmissions
+        mConnectedThread = new ConnectedThread(mmSocket);
+        mConnectedThread.start();
+    }
+
+    // Write to ConnectedThread in un-synchronised manner
+    public void write(byte[] out) {
+        // Create temp object
+        ConnectedThread r;
+
+        Log.d(TAG, "write: Called.");
+
+        mConnectedThread.write(out);
     }
 
 }

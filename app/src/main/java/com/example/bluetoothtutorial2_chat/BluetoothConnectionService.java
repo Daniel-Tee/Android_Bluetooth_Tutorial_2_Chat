@@ -78,7 +78,6 @@ public class BluetoothConnectionService {
                 Log.e(TAG, "run: IOException while accepting connection: ", e);
             }
 
-            // TODO: Third part
             if (socket != null) {
                 connected(socket, mmDevice);
             }
@@ -135,14 +134,14 @@ public class BluetoothConnectionService {
             } catch (IOException e) {
                 try {
                     mmSocket.close();
-                } catch (IOException e) {
-                    Log.e(TAG, "run: IOException while handling IOException. Attempted to close socket", e);
+                } catch (IOException e2) {
+                    Log.e(TAG, "run: IOException while handling IOException. Attempted to close socket", e2);
                 }
                 Log.e(TAG, "run: IOException. Closed socket :", e);
             }
 
-            // TODO: part 3
-            connected(mmSocket, mmDevice)
+            // Call connected
+            connected(mmSocket, mmDevice);
         }
 
         public void cancel() {

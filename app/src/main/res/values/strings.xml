@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Bluetooth Tutorial 2 - Chat</string>
+    <string name="button_text">ON/OFF</string>
+    <string name="button_toggle_discoverability">Toggle\nDiscoverability</string>
+    <string name="button_discover">Discover</string>
+    <string name="button_findUnpairedDevices">Start Connection</string>
+    <string name="plain_text">Enter Text Here</string>
+    <string name="button_send">Send</string>
 </resources>

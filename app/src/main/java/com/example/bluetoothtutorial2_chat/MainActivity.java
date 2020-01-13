@@ -19,6 +19,7 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -40,10 +41,14 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     ListView list_new_devices;
     Button btn_start_connection;
     Button btn_send;
+    Button btn_query;
 
     BluetoothConnectionService mBluetoothConnection;
     BluetoothDevice mBTDevice;
     EditText editText;
+    TextView tv_slave;
+
+    boolean isSlave;
 
     private static final UUID MY_UUID_INSECURE =
             UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66");
@@ -192,6 +197,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         btn_discover = findViewById(R.id.btn_discover);
         btn_start_connection = findViewById(R.id.btnFindUnpairedDevices);
         btn_send = findViewById(R.id.btn_send);
+        btn_query = findViewById(R.id.btn_paired_query);
 
         // Edit text
         editText = findViewById(R.id.editText);
@@ -249,6 +255,13 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             public void onClick(View v) {
                 byte[] bytes = editText.getText().toString().getBytes(Charset.defaultCharset());
                 mBluetoothConnection.write(bytes);
+            }
+        });
+
+        btn_query.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                queryPairedDevice();
             }
         });
     }
@@ -351,6 +364,37 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
 
     }
+
+    // Function to query already paired devices
+    public void queryPairedDevice() {
+        Log.d(TAG, "queryPairedDevice: Begin.");
+        if (pairedDevices.size() > 0) {
+            Log.d(TAG, "queryPairedDevice: Paired devices found.");
+            
+            // There are paired devices. Get the name and address of each paired device.
+            for (BluetoothDevice device : pairedDevices) {
+                String deviceHardwareAddress = device.getAddress(); // MAC address
+                Log.d(TAG, "queryPairedDevice: Checking MAC: " + deviceHardwareAddress);
+
+                // If the OnePlus MAC address is found, register it
+                if (deviceHardwareAddress.equals("C0:EE:FB:E5:FC:A7")) {
+                    Log.d(TAG, "queryPairedDevice: Found OnePlus in paired devices.");
+                    mBTDevice = device;
+                    mBluetoothConnection = new BluetoothConnectionService(MainActivity.this);
+                    break;
+                }
+
+                // If the Motorola MAC address is found, register it
+                if (deviceHardwareAddress.equals("90:68:C3:70:0F:A2")) {
+                    Log.d(TAG, "queryPairedDevice: Found Motorola in paired devices.");
+                    mBTDevice = device;
+                    mBluetoothConnection = new BluetoothConnectionService(MainActivity.this);
+                    break;
+                }
+            }
+        }
+    }
+
 
     @TargetApi(23)
     private void checkBTPermission() {

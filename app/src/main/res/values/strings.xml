@@ -6,4 +6,6 @@
     <string name="button_findUnpairedDevices">Start Connection</string>
     <string name="plain_text">Enter Text Here</string>
     <string name="button_send">Send</string>
+    <string name="button_query">Register Pair</string>
+    <string name="button_swap_mode">Swap</string>
 </resources>

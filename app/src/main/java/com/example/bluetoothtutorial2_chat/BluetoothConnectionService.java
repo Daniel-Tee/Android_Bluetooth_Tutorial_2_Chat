@@ -6,7 +6,9 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
+import android.widget.TextView;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,6 +33,8 @@ public class BluetoothConnectionService {
     private ProgressDialog mProgressDialog;
 
     private ConnectedThread mConnectedThread;
+
+    public String mDispString;
 
     public BluetoothConnectionService(Context context) {
         mContext = context;
@@ -230,10 +234,11 @@ public class BluetoothConnectionService {
                 try {
                     bytes = mmInStream.read(buffer);
 
-                    // This code is specific to application, used to change inocming data to the
+                    // This code is specific to application, used to change incoming data to the
                     // string of text for chat, but can be changed to anything to fit purpose
                     String incomingMessage = new String(buffer, 0, bytes);
                     Log.d(TAG, "run: IncomingMessage :" + incomingMessage);
+
                 } catch (IOException e) {
                     Log.e(TAG, "run: error reading inStream, ending comms: ", e);
                     break;

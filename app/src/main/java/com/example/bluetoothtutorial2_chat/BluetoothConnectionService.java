@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 import android.widget.TextView;
+import android.os.Handler;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,10 +35,11 @@ public class BluetoothConnectionService {
 
     private ConnectedThread mConnectedThread;
 
-    public String mDispString;
+    private Handler mHandler;
 
-    public BluetoothConnectionService(Context context) {
+    public BluetoothConnectionService(Context context, Handler handler) {
         mContext = context;
+        mHandler = handler;
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         Log.d(TAG, "BluetoothConnectionService: Calling start in constructor.");
         start(); // start chat service
@@ -238,6 +240,8 @@ public class BluetoothConnectionService {
                     // string of text for chat, but can be changed to anything to fit purpose
                     String incomingMessage = new String(buffer, 0, bytes);
                     Log.d(TAG, "run: IncomingMessage :" + incomingMessage);
+
+                    mHandler.obtainMessage(0, incomingMessage).sendToTarget();
 
                 } catch (IOException e) {
                     Log.e(TAG, "run: error reading inStream, ending comms: ", e);

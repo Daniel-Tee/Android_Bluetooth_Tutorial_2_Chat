@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     BluetoothConnectionService mBluetoothConnection;
     BluetoothDevice mBTDevice;
     EditText editText;
-    TextView tv_slave;
+    TextView tv_rcv;
 
     boolean isSlave;
 
@@ -199,6 +199,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         btn_send = findViewById(R.id.btn_send);
         btn_query = findViewById(R.id.btn_paired_query);
 
+        // Text view
+        tv_rcv = findViewById(R.id.tv_rcv);
+
         // Edit text
         editText = findViewById(R.id.editText);
 
@@ -265,6 +268,14 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             }
         });
     }
+
+    private final Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            Log.d(TAG, "handleMessage: Received message: " + msg.arg1);
+            tv_rcv.setText("RCV: " + msg.obj);
+        }
+    };
 
     // NEW
     // Method to start connection
@@ -380,7 +391,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 if (deviceHardwareAddress.equals("C0:EE:FB:E5:FC:A7")) {
                     Log.d(TAG, "queryPairedDevice: Found OnePlus in paired devices.");
                     mBTDevice = device;
-                    mBluetoothConnection = new BluetoothConnectionService(MainActivity.this);
+                    mBluetoothConnection = new BluetoothConnectionService(MainActivity.this, mHandler);
                     break;
                 }
 
@@ -388,7 +399,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 if (deviceHardwareAddress.equals("90:68:C3:70:0F:A2")) {
                     Log.d(TAG, "queryPairedDevice: Found Motorola in paired devices.");
                     mBTDevice = device;
-                    mBluetoothConnection = new BluetoothConnectionService(MainActivity.this);
+                    mBluetoothConnection = new BluetoothConnectionService(MainActivity.this, mHandler);
                     break;
                 }
             }
@@ -427,7 +438,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
        mBTDevices.get(i).createBond();
 
        mBTDevice = mBTDevices.get(i);
-       mBluetoothConnection = new BluetoothConnectionService(MainActivity.this);
+       mBluetoothConnection = new BluetoothConnectionService(MainActivity.this, mHandler);
    }
 
     private class ConnectThread extends Thread {
